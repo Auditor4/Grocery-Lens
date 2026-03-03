@@ -1,0 +1,118 @@
+// ============================================================
+// Prisma Schema — The Database Blueprint
+// ============================================================
+// This file tells Prisma (our database toolkit) what TABLES
+// to create and what COLUMNS each table has. Think of it like
+// designing a spreadsheet — each "model" is a sheet, each
+// "field" is a column.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --- User: Anyone who creates an account ---
+model User {
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id")     // Login name chosen by user
+  uidHash     String   @map("uid_hash")             // bcrypt hash of their UID
+  displayName String   @map("display_name")         // Shown in the UI
+  createdAt   DateTime @default(now()) @map("created_at")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  // Relations — tells Prisma how tables connect
+  entries      GroceryEntry[]
+  groups       GroupMember[]
+  createdGroups Group[]   @relation("GroupCreator")
+  categories   Category[] @relation("UserCategories")
+
+  @@map("users")
+}
+
+// --- Group: A shared space for flatmates/families ---
+model Group {
+  id        String   @id @default(uuid())
+  groupCode String   @unique @map("group_code")     // e.g. "GRP-4K8N2W"
+  name      String                                   // e.g. "Flat 302 Kitchen"
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  creator  User          @relation("GroupCreator", fields: [createdBy], references: [id])
+  members  GroupMember[]
+  entries  GroceryEntry[]
+  categories Category[]  @relation("GroupCategories")
+
+  @@map("groups")
+}
+
+// --- GroupMember: Links users to groups ---
+model GroupMember {
+  id       String   @id @default(uuid())
+  groupId  String   @map("group_id")
+  userId   String   @map("user_id")
+  role     String   @default("MEMBER")    // "ADMIN" or "MEMBER"
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])    // A user can only be in a group once
+  @@map("group_members")
+}
+
+// --- Category: How items are organized ---
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  icon      String?                              // Emoji like "🥦"
+  sortOrder Int      @default(0) @map("sort_order")
+  isDefault Boolean  @default(false) @map("is_default")
+  ownerType String   @map("owner_type")           // "SYSTEM", "USER", or "GROUP"
+  ownerId   String?  @map("owner_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  entries  GroceryEntry[]
+  ownerUser  User?  @relation("UserCategories", fields: [ownerId], references: [id])
+  ownerGroup Group? @relation("GroupCategories", fields: [ownerId], references: [id])
+
+  @@map("categories")
+}
+
+// --- GroceryEntry: Each grocery item purchase ---
+model GroceryEntry {
+  id           String   @id @default(uuid())
+  name         String                               // "Milk", "Tomatoes", etc.
+  amount       Float                                // Cost in Rs.
+  quantity     Float                                // How much was bought
+  unit         String                               // "Kg", "L", "pcs", etc.
+  categoryId   String   @map("category_id")
+  channel      String                               // "Zepto", "Blinkit", etc.
+  purchaseDate DateTime @map("purchase_date")
+  notes        String?
+  receiptUrl   String?  @map("receipt_url")
+  scopeType    String   @map("scope_type")           // "PERSONAL" or "GROUP"
+  groupId      String?  @map("group_id")
+  addedBy      String   @map("added_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category Category @relation(fields: [categoryId], references: [id])
+  group    Group?   @relation(fields: [groupId], references: [id])
+  user     User     @relation(fields: [addedBy], references: [id])
+
+  @@index([addedBy, scopeType])
+  @@index([groupId])
+  @@index([purchaseDate])
+  @@index([name])
+  @@map("grocery_entries")
+}
