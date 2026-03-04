@@ -11,42 +11,44 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// schema.prisma
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql" 
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // --- User: Anyone who creates an account ---
 model User {
   id          String   @id @default(uuid())
-  userId      String   @unique @map("user_id")     // Login name chosen by user
+  userId      String   @unique @map("user_id")      // Login name chosen by user
   uidHash     String   @map("uid_hash")             // bcrypt hash of their UID
   displayName String   @map("display_name")         // Shown in the UI
   createdAt   DateTime @default(now()) @map("created_at")
   lastLoginAt DateTime? @map("last_login_at")
 
   // Relations — tells Prisma how tables connect
-  entries      GroceryEntry[]
-  groups       GroupMember[]
-  createdGroups Group[]   @relation("GroupCreator")
-  categories   Category[] @relation("UserCategories")
+  entries       GroceryEntry[]
+  groups        GroupMember[]
+  createdGroups Group[]    @relation("GroupCreator")
+  categories    Category[] @relation("UserCategories")
 
   @@map("users")
 }
 
 // --- Group: A shared space for flatmates/families ---
 model Group {
-  id        String   @id @default(uuid())
-  groupCode String   @unique @map("group_code")     // e.g. "GRP-4K8N2W"
-  name      String                                   // e.g. "Flat 302 Kitchen"
-  createdBy String   @map("created_by")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  groupCode   String   @unique @map("group_code")     // e.g. "GRP-4K8N2W"
+  name        String                                  // e.g. "Flat 302 Kitchen"
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
-  creator  User          @relation("GroupCreator", fields: [createdBy], references: [id])
-  members  GroupMember[]
-  entries  GroceryEntry[]
-  categories Category[]  @relation("GroupCategories")
+  creator    User          @relation("GroupCreator", fields: [createdBy], references: [id])
+  members    GroupMember[]
+  entries    GroceryEntry[]
+  categories Category[]    @relation("GroupCategories")
 
   @@map("groups")
 }
@@ -69,20 +71,23 @@ model GroupMember {
 
 // --- Category: How items are organized ---
 model Category {
-  id        String   @id @default(uuid())
-  name      String
-  icon      String?                              // Emoji like "🥦"
-  sortOrder Int      @default(0) @map("sort_order")
-  isDefault Boolean  @default(false) @map("is_default")
-  ownerType String   @map("owner_type")           // "SYSTEM", "USER", or "GROUP"
-  ownerId   String?  @map("owner_id")
+  id          String   @id @default(uuid())
+  name        String
+  icon        String?                                // Emoji like "🥦"
+  sortOrder   Int      @default(0) @map("sort_order")
+  isDefault   Boolean  @default(false) @map("is_default")
+  ownerType   String   @map("owner_type")            // "SYSTEM", "USER", or "GROUP"
+  
+  // THE FIX: These are the physical columns in the database
+  userId      String?  @map("user_id")
+  groupId     String?  @map("group_id")
 
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relations
-  entries  GroceryEntry[]
-  ownerUser  User?  @relation("UserCategories", fields: [ownerId], references: [id])
-  ownerGroup Group? @relation("GroupCategories", fields: [ownerId], references: [id])
+  // THE FIX: These are the relations pointing to those physical columns
+  ownerUser   User?    @relation("UserCategories", fields: [userId], references: [id])
+  ownerGroup  Group?   @relation("GroupCategories", fields: [groupId], references: [id])
+  entries     GroceryEntry[]
 
   @@map("categories")
 }
@@ -90,16 +95,16 @@ model Category {
 // --- GroceryEntry: Each grocery item purchase ---
 model GroceryEntry {
   id           String   @id @default(uuid())
-  name         String                               // "Milk", "Tomatoes", etc.
-  amount       Float                                // Cost in Rs.
-  quantity     Float                                // How much was bought
-  unit         String                               // "Kg", "L", "pcs", etc.
+  name         String                                 // "Milk", "Tomatoes", etc.
+  amount       Float                                  // Cost in Rs.
+  quantity     Float                                  // How much was bought
+  unit         String                                 // "Kg", "L", "pcs", etc.
   categoryId   String   @map("category_id")
-  channel      String                               // "Zepto", "Blinkit", etc.
+  channel      String                                 // "Zepto", "Blinkit", etc.
   purchaseDate DateTime @map("purchase_date")
   notes        String?
   receiptUrl   String?  @map("receipt_url")
-  scopeType    String   @map("scope_type")           // "PERSONAL" or "GROUP"
+  scopeType    String   @map("scope_type")            // "PERSONAL" or "GROUP"
   groupId      String?  @map("group_id")
   addedBy      String   @map("added_by")
   createdAt    DateTime @default(now()) @map("created_at")
