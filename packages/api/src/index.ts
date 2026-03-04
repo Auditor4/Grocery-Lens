@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 3001;
 
 // 1. CORS: Allow the frontend (different port) to talk to the backend
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: ['https://grocery-lens-web.vercel.app/'],
     credentials: true,   // Allow cookies to be sent cross-origin
 }));
 
