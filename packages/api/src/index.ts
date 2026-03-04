@@ -64,13 +64,17 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 // ─── Start the Server ────────────────────────────────────
-app.listen(PORT, () => {
-    console.log('');
-    console.log('🛒 ═══════════════════════════════════════════');
-    console.log(`🛒  GroceryLens API running on port ${PORT}`);
-    console.log(`🛒  http://localhost:${PORT}/api/health`);
-    console.log('🛒 ═══════════════════════════════════════════');
-    console.log('');
-});
+// Only call app.listen if we are NOT running on Vercel
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log('');
+        console.log('🛒 ═══════════════════════════════════════════');
+        console.log(`🛒  GroceryLens API running on port ${PORT}`);
+        console.log(`🛒  http://localhost:${PORT}/api/health`);
+        console.log('🛒 ═══════════════════════════════════════════');
+        console.log('');
+    });
+}
 
+// Vercel needs this export to consume your Express app as a serverless function
 export default app;
