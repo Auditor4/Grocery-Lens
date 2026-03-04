@@ -6,7 +6,7 @@
 // we centralize it here.
 // ============================================================
 
-const API_BASE =  import.meta.env.VITE_API_URL + '/api'     ;
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
 
 interface ApiResponse<T> {
     success: boolean;

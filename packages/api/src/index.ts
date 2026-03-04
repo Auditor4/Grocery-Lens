@@ -28,8 +28,18 @@ const PORT = process.env.PORT || 3001;
 
 // 1. CORS: Allow the frontend (different port) to talk to the backend
 app.use(cors({
-    origin: [process.env.FRONTEND_URL || 'https://grocery-lens-web.vercel.app', 'http://localhost:5173'],
-    credentials: true,   // Allow cookies to be sent cross-origin
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        if (origin.startsWith('http://localhost:') || origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+        const configuredOrigin = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+        if (configuredOrigin && origin === configuredOrigin) {
+            return callback(null, true);
+        }
+        return callback(new Error('Blocked by CORS'));
+    },
+    credentials: true,
 }));
 
 // 2. Parse JSON request bodies (so we can read req.body)
