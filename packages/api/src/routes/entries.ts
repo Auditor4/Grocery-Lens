@@ -46,7 +46,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         if (endDate) where.purchaseDate = { ...(where.purchaseDate || {}), lte: new Date(endDate) };
         if (categoryId) where.categoryId = categoryId;
         if (channel) where.channel = channel;
-        if (search) where.name = { contains: search };
+        if (search) where.name = { contains: search, mode: 'insensitive' };
 
         const [entries, total] = await Promise.all([
             prisma.groceryEntry.findMany({

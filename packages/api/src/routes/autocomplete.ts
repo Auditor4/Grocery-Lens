@@ -30,7 +30,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         const entries = await prisma.groceryEntry.findMany({
             where: {
                 ...scopeFilter,
-                name: { contains: q },
+                name: { contains: q, mode: 'insensitive' },
             },
             orderBy: { createdAt: 'desc' },
             take: 50,

@@ -76,8 +76,8 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         const token = generateToken({ id: user.id, userId: user.userId });
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         });
 
@@ -136,8 +136,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response): Promise
         const token = generateToken({ id: user.id, userId: user.userId });
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
 

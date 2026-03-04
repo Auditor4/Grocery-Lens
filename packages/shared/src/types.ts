@@ -43,7 +43,8 @@ export interface Category {
     sortOrder: number;
     isDefault: boolean;
     ownerType: 'SYSTEM' | 'USER' | 'GROUP';
-    ownerId?: string;
+    userId?: string;
+    groupId?: string;
     createdAt: string;
 }
 

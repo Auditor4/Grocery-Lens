@@ -45,7 +45,6 @@ async function main() {
                 sortOrder: cat.sortOrder,
                 isDefault: true,
                 ownerType: 'SYSTEM',
-                ownerId: null,
             },
         });
         console.log(`  ✅ Created category: ${cat.icon} ${cat.name}`);
