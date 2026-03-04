@@ -21,8 +21,8 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
             where: {
                 OR: [
                     { ownerType: 'SYSTEM' },                        // System defaults
-                    { ownerType: 'USER', ownerId: req.user!.id },   // User's custom
-                    ...(groupId ? [{ ownerType: 'GROUP' as const, ownerId: groupId }] : []),
+                    { ownerType: 'USER', userId: req.user!.id },    // User's custom
+                    ...(groupId ? [{ ownerType: 'GROUP' as const, groupId: groupId }] : []),
                 ],
             },
             orderBy: { sortOrder: 'asc' },
@@ -59,7 +59,8 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
                 sortOrder: (maxOrder?.sortOrder || 0) + 1,
                 isDefault: false,
                 ownerType: ownerType === 'GROUP' ? 'GROUP' : 'USER',
-                ownerId: ownerType === 'GROUP' ? groupId : req.user!.id,
+                // Spread operator to dynamically assign either groupId or userId
+                ...(ownerType === 'GROUP' ? { groupId: groupId } : { userId: req.user!.id }),
             },
         });
 
@@ -79,7 +80,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
             where: {
                 id: req.params.id,
                 OR: [
-                    { ownerType: 'USER', ownerId: req.user!.id },
+                    { ownerType: 'USER', userId: req.user!.id },
                     { ownerType: 'SYSTEM' },
                 ],
             },
@@ -118,7 +119,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response): Promise<void> => 
             where: {
                 id: req.params.id,
                 ownerType: 'USER',
-                ownerId: req.user!.id,
+                userId: req.user!.id,
             },
         });
 
